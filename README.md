@@ -125,7 +125,55 @@ eval $(minikube docker-env)
 docker build -t highload-microservice:latest .
 ```
 
-### 2. Применение манифестов Kubernetes
+### 2. Практическое развертывание (Docker Desktop Kubernetes)
+
+Ниже — проверенная последовательность для Docker Desktop Kubernetes (узел `desktop-control-plane`).
+
+1) Namespace и базовые манифесты:
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/secret.yaml -n highload-microservice
+kubectl apply -f k8s/configmap.yaml -n highload-microservice
+```
+
+2) Поднять зависимости (Postgres, Redis, ZooKeeper, Kafka):
+```bash
+kubectl apply -f k8s/postgres-deployment.yaml -n highload-microservice
+kubectl apply -f k8s/redis-deployment.yaml -n highload-microservice
+kubectl apply -f k8s/kafka-deployment.yaml -n highload-microservice
+```
+
+3) Дождаться готовности зависимостей:
+```bash
+kubectl get pods -n highload-microservice
+kubectl wait --for=condition=ready pod -l app=postgres  -n highload-microservice --timeout=600s
+kubectl wait --for=condition=ready pod -l app=redis     -n highload-microservice --timeout=600s
+kubectl wait --for=condition=ready pod -l app=zookeeper -n highload-microservice --timeout=900s
+kubectl wait --for=condition=ready pod -l app=kafka     -n highload-microservice --timeout=900s
+```
+
+4) Сборка и публикация образа приложения в Docker Hub (неймспейс замените на свой, пример: `docker.io/oleg2195`):
+```bash
+docker build -t docker.io/<username>/highload-microservice:latest .
+docker login -u <username>   # рекомендуется вход по Personal Access Token
+docker push docker.io/<username>/highload-microservice:latest
+```
+
+Важно: Если в Docker Desktop был включён `registry-mirrors`, удалите его в Settings → Docker Engine ("registry-mirrors": []) и перезапустите Docker Desktop.
+
+5) Указать образ приложения в деплойменте `k8s/app-deployment.yaml` (поле `image`):
+```yaml
+image: docker.io/<username>/highload-microservice:latest
+imagePullPolicy: IfNotPresent
+```
+
+6) Применить приложение и дождаться готовности:
+```bash
+kubectl apply -f k8s/app-deployment.yaml -n highload-microservice
+kubectl rollout restart deployment/highload-microservice -n highload-microservice
+kubectl rollout status  deployment/highload-microservice -n highload-microservice
+kubectl get pods -n highload-microservice
+```
 
 ```bash
 # Создание namespace
@@ -148,6 +196,21 @@ kubectl get service highload-service -n highload-microservice
 # Или через port-forward
 kubectl port-forward service/highload-service 8080:80 -n highload-microservice
 ```
+
+### 4. Настройки Kafka, которые мы добавили
+
+В `k8s/kafka-deployment.yaml` настроены корректные слушатели и пробы:
+```yaml
+- name: KAFKA_LISTENERS
+  value: "PLAINTEXT://0.0.0.0:9092"
+- name: KAFKA_ADVERTISED_LISTENERS
+  value: "PLAINTEXT://kafka-service:9092"
+- name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+  value: "PLAINTEXT:PLAINTEXT"
+```
+Пробы переведены на TCP 9092, что делает readiness/liveness стабильными.
+
+Если образы тянутся долго или появляются ImagePullBackOff — проверьте отсутствие registry mirror и авторизацию в Docker Hub; при приватном репозитории добавьте `imagePullSecrets` в pod spec.
 
 ## 📚 API Документация
 
@@ -331,6 +394,47 @@ hey -n 1000 -c 10 -m POST -H "Content-Type: application/json" -d '{"email":"test
 # Тест получения пользователей
 hey -n 1000 -c 10 http://localhost:8080/api/v1/users
 ```
+
+## ✅ Полная проверка работоспособности (чек‑лист)
+
+1) Поды и сервисы:
+```bash
+kubectl get pods -n highload-microservice
+kubectl get svc  -n highload-microservice
+```
+
+2) API:
+```bash
+kubectl port-forward service/highload-service 8080:80 -n highload-microservice
+curl http://localhost:8080/health
+```
+
+3) PostgreSQL:
+```bash
+kubectl exec -n highload-microservice deploy/postgres -- pg_isready -U postgres
+kubectl exec -n highload-microservice deploy/postgres -- psql -U postgres -d highload_db -c "SELECT 1;"
+```
+
+4) Redis:
+```bash
+kubectl exec -n highload-microservice deploy/redis -- redis-cli ping
+```
+
+5) Kafka:
+```bash
+kubectl exec -n highload-microservice deploy/kafka -- kafka-topics --bootstrap-server kafka-service:9092 --list
+```
+
+6) Функционал:
+- POST /api/v1/users — создать пользователя и убедиться, что он в БД.
+- GET того же пользователя дважды — второй раз быстрее (кэш Redis).
+- POST /api/v1/events — создать событие, в логах сервиса появилась обработка (worker pool + Kafka consumer).
+
+## 🧯 Траблшутинг
+
+- `ImagePullBackOff` у приложения — опубликуйте образ в `docker.io/<username>/highload-microservice:latest`, обновите поле `image` и перезапустите rollout.
+- Ошибки Kafka при pull — проверьте, что нет `registry-mirrors` и выполнен `docker login`. При необходимости используйте облегчённую Kafka KRaft (см. комментарии в `k8s/kafka-deployment.yaml`).
+- Таймауты `context deadline exceeded` у консюмера — нормальны при отсутствии новых сообщений в топике.
 
 ## 🔒 Безопасность
 
