@@ -395,6 +395,73 @@ hey -n 1000 -c 10 -m POST -H "Content-Type: application/json" -d '{"email":"test
 hey -n 1000 -c 10 http://localhost:8080/api/v1/users
 ```
 
+## 🧪 E2E запуск (smoke)
+
+### Локально: Docker Compose
+
+```bash
+# 1) Запустить весь стек
+docker-compose up -d
+
+# 2) Проверить здоровье сервиса
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/health
+
+# 3) Запустить smoke-тесты
+# Windows PowerShell
+./scripts/smoke.ps1
+# Linux/macOS
+bash scripts/smoke.sh
+
+# 4) Остановить окружение
+docker-compose down -v
+```
+
+### Kubernetes
+
+```bash
+# 1) Применить манифесты (если ещё не применены)
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/secret.yaml -n highload-microservice
+kubectl apply -f k8s/configmap.yaml -n highload-microservice
+kubectl apply -f k8s/postgres-deployment.yaml -n highload-microservice
+kubectl apply -f k8s/redis-deployment.yaml -n highload-microservice
+kubectl apply -f k8s/kafka-deployment.yaml -n highload-microservice
+kubectl apply -f k8s/app-deployment.yaml -n highload-microservice
+
+# 2) Дождаться готовности
+kubectl wait --for=condition=ready pod -l app=highload-microservice -n highload-microservice --timeout=600s
+
+# 3) Port-forward и запустить smoke
+kubectl port-forward service/highload-service 8080:80 -n highload-microservice &
+# Windows PowerShell
+./scripts/smoke.ps1
+# Linux/macOS
+bash scripts/smoke.sh
+```
+
+### GitHub Actions
+
+- Compose smoke: `.github/workflows/e2e-compose.yml` (сборка образа, docker-compose up, smoke)
+- K8s smoke (Kind): `.github/workflows/e2e-k8s.yml` (Kind cluster, загрузка образа, манифесты, smoke)
+
+Запуск:
+- Автоматически на push/pull_request в ветку `main`
+- Вручную: Actions → выбрать workflow → Run workflow
+
+### Команды для пуша в ветку main
+
+```bash
+# Создать/переключиться на main локально
+git checkout -B main
+
+# Добавить изменения и закоммитить
+git add .
+git commit -m "docs: add e2e (compose+k8s) run instructions"
+
+# Отправить в origin/main
+git push -u origin main
+```
+
 ## ✅ Полная проверка работоспособности (чек‑лист)
 
 1) Поды и сервисы:

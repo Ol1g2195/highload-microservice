@@ -1,0 +1,69 @@
+name: e2e-compose
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build app image
+        run: docker build -t highload-microservice:latest .
+
+      - name: Start stack
+        run: |
+          docker-compose up -d
+          docker-compose ps
+
+      - name: Wait for app health
+        shell: bash
+        run: |
+          for i in {1..60}; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/health || true)
+            if [ "$code" = "200" ]; then exit 0; fi
+            sleep 2
+          done
+          echo "App failed to become healthy" >&2; exit 1
+
+      - name: Smoke - create user
+        id: create_user
+        shell: bash
+        run: |
+          resp=$(curl -s -X POST http://localhost:8080/api/v1/users \
+            -H "Content-Type: application/json" \
+            -d '{"email":"user@example.com","first_name":"John","last_name":"Doe"}')
+          echo "$resp"
+          id=$(echo "$resp" | jq -r '.id')
+          if [ -z "$id" ] || [ "$id" = "null" ]; then echo "create user failed"; exit 1; fi
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke - create event
+        shell: bash
+        run: |
+          id="${{ steps.create_user.outputs.id }}"
+          curl -s -X POST http://localhost:8080/api/v1/events \
+            -H "Content-Type: application/json" \
+            -d "{\"user_id\":\"$id\",\"type\":\"smoke_event\",\"data\":\"{\\\"action\\\":\\\"login\\\"}\"}" | jq .
+
+      - name: Smoke - list events
+        shell: bash
+        run: |
+          curl -s http://localhost:8080/api/v1/events?page=1&limit=10 | jq .
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker-compose logs app
+
+      - name: Teardown
+        if: always()
+        run: docker-compose down -v
+
+
