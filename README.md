@@ -34,7 +34,7 @@
 ### 1. Клонирование репозитория
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Ol1g2195/highload-microservice
 cd highload-microservice
 ```
 
