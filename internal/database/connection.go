@@ -3,6 +3,8 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 
 	"highload-microservice/internal/config"
 
@@ -27,5 +29,22 @@ func NewConnection(cfg config.DatabaseConfig) (*sql.DB, error) {
 	db.SetMaxIdleConns(5)
 
 	return db, nil
+}
+
+// RunMigrations executes database migrations
+func RunMigrations(db *sql.DB) error {
+	// Read migrations file
+	migrationsPath := filepath.Join("internal", "database", "migrations.sql")
+	migrations, err := ioutil.ReadFile(migrationsPath)
+	if err != nil {
+		return fmt.Errorf("failed to read migrations file: %w", err)
+	}
+
+	// Execute migrations
+	if _, err := db.Exec(string(migrations)); err != nil {
+		return fmt.Errorf("failed to execute migrations: %w", err)
+	}
+
+	return nil
 }
 

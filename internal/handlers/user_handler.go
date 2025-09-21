@@ -25,6 +25,8 @@ func NewUserHandler(userService *services.UserService, logger *logrus.Logger) *U
 }
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
+	h.logger.Info("CreateUser handler called")
+	
 	var req models.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Errorf("Invalid request body: %v", err)
@@ -32,13 +34,15 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
+	h.logger.Infof("Creating user with email: %s", req.Email)
 	user, err := h.userService.CreateUser(c.Request.Context(), req)
 	if err != nil {
 		h.logger.Errorf("Failed to create user: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user", "details": err.Error()})
 		return
 	}
 
+	h.logger.Infof("User created successfully: %s", user.ID)
 	c.JSON(http.StatusCreated, user)
 }
 

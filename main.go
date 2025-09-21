@@ -42,6 +42,12 @@ func main() {
 	}
 	defer db.Close()
 
+	// Run migrations
+	if err := database.RunMigrations(db); err != nil {
+		logger.Fatalf("Failed to run migrations: %v", err)
+	}
+	logger.Info("Database migrations completed successfully")
+
 	// Initialize Redis
 	redisClient, err := redis.NewClient(cfg.Redis)
 	if err != nil {
