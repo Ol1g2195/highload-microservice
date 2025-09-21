@@ -122,7 +122,7 @@ func main() {
 		}
 		
 		// Check Redis connection
-		if err := redisClient.Ping(c.Request.Context()).Err(); err != nil {
+		if err := redisClient.Ping(c.Request.Context()); err != nil {
 			c.JSON(503, gin.H{
 				"status":    "unhealthy", 
 				"error":     "redis connection failed",
