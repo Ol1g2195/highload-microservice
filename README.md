@@ -448,20 +448,6 @@ bash scripts/smoke.sh
 - Автоматически на push/pull_request в ветку `main`
 - Вручную: Actions → выбрать workflow → Run workflow
 
-### Команды для пуша в ветку main
-
-```bash
-# Создать/переключиться на main локально
-git checkout -B main
-
-# Добавить изменения и закоммитить
-git add .
-git commit -m "docs: add e2e (compose+k8s) run instructions"
-
-# Отправить в origin/main
-git push -u origin main
-```
-
 ## ✅ Полная проверка работоспособности (чек‑лист)
 
 1) Поды и сервисы:
