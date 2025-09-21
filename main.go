@@ -111,6 +111,26 @@ func main() {
 
 	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
+		// Check database connection
+		if err := db.Ping(); err != nil {
+			c.JSON(503, gin.H{
+				"status":    "unhealthy",
+				"error":     "database connection failed",
+				"timestamp": time.Now().Unix(),
+			})
+			return
+		}
+		
+		// Check Redis connection
+		if err := redisClient.Ping(c.Request.Context()).Err(); err != nil {
+			c.JSON(503, gin.H{
+				"status":    "unhealthy", 
+				"error":     "redis connection failed",
+				"timestamp": time.Now().Unix(),
+			})
+			return
+		}
+		
 		c.JSON(200, gin.H{
 			"status":    "healthy",
 			"timestamp": time.Now().Unix(),

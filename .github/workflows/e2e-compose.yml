@@ -28,10 +28,14 @@ jobs:
         run: |
           for i in {1..60}; do
             code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/health || true)
-            if [ "$code" = "200" ]; then exit 0; fi
-            sleep 2
+            if [ "$code" = "200" ]; then 
+              echo "App is healthy"
+              exit 0
+            fi
+            echo "Waiting for app health... attempt $i/60 (code: $code)"
+            sleep 5
           done
-          echo "App failed to become healthy" >&2; exit 1
+          echo "App failed to become healthy after 5 minutes" >&2; exit 1
 
       - name: Smoke - create user
         id: create_user
