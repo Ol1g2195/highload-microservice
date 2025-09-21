@@ -22,10 +22,18 @@ jobs:
         run: |
           docker compose up -d
           docker compose ps
+          echo "Waiting for services to start..."
+          sleep 10
+          docker compose logs app
 
       - name: Wait for app health
         shell: bash
         run: |
+          echo "Checking if app container is running..."
+          docker compose ps app
+          echo "Checking app logs..."
+          docker compose logs app --tail=20
+          echo "Testing connectivity..."
           for i in {1..60}; do
             code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/health || true)
             if [ "$code" = "200" ]; then 
@@ -33,9 +41,16 @@ jobs:
               exit 0
             fi
             echo "Waiting for app health... attempt $i/60 (code: $code)"
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Checking app logs after $i attempts..."
+              docker compose logs app --tail=10
+            fi
             sleep 5
           done
-          echo "App failed to become healthy after 5 minutes" >&2; exit 1
+          echo "App failed to become healthy after 5 minutes" >&2
+          echo "Final app logs:"
+          docker compose logs app --tail=50
+          exit 1
 
       - name: Smoke - create user
         id: create_user
