@@ -78,8 +78,8 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"email":"user@example.com","first_name":"John","last_name":"Doe"}' 2>&1)
           echo "Full response: $resp"
-          # Extract just the response body (after the last empty line)
-          body=$(echo "$resp" | sed -n '/^$/,$p' | tail -n +2)
+          # Extract just the JSON response body (last line that starts with {)
+          body=$(echo "$resp" | grep '^{' | tail -1)
           echo "Response body: $body"
           id=$(echo "$body" | jq -r '.id' 2>/dev/null || echo "")
           if [ -z "$id" ] || [ "$id" = "null" ]; then 
