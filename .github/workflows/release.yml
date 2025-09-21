@@ -124,37 +124,3 @@ jobs:
         body_path: release_notes.md
         draft: false
         prerelease: false
-
-    - name: Upload Docker Compose file
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./docker-compose.yml
-        asset_name: docker-compose.yml
-        asset_content_type: application/x-yaml
-
-    - name: Upload Kubernetes manifests
-      run: |
-        tar -czf k8s-manifests.tar.gz k8s/
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./k8s-manifests.tar.gz
-        asset_name: k8s-manifests.tar.gz
-        asset_content_type: application/gzip
-
-    - name: Upload smoke test scripts
-      run: |
-        tar -czf smoke-scripts.tar.gz scripts/smoke.*
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create-release.outputs.upload_url }}
-        asset_path: ./smoke-scripts.tar.gz
-        asset_name: smoke-scripts.tar.gz
-        asset_content_type: application/gzip
