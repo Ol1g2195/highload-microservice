@@ -15,9 +15,9 @@ type Event struct {
 }
 
 type CreateEventRequest struct {
-	UserID uuid.UUID `json:"user_id" binding:"required"`
-	Type   string    `json:"type" binding:"required"`
-	Data   string    `json:"data" binding:"required"`
+	UserID uuid.UUID `json:"user_id" binding:"required" validate:"required,uuid"`
+	Type   string    `json:"type" binding:"required" validate:"required,min=1,max=50,safe_string,no_sql_injection,no_xss"`
+	Data   string    `json:"data" binding:"required" validate:"required,min=1,max=1000,safe_string,no_sql_injection,no_xss"`
 }
 
 type EventListResponse struct {
@@ -34,4 +34,3 @@ type KafkaEvent struct {
 	Data      string    `json:"data"`
 	Timestamp time.Time `json:"timestamp"`
 }
-

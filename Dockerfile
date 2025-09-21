@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Install git and ca-certificates
 RUN apk add --no-cache git ca-certificates
@@ -38,6 +38,9 @@ COPY --from=builder /app/main .
 # Copy database migrations
 COPY --from=builder /app/internal/database/migrations.sql ./migrations.sql
 
+# Copy certificates (if they exist)
+COPY --from=builder /app/certs ./certs
+
 # Change ownership to non-root user
 RUN chown -R appuser:appgroup /app
 
@@ -49,7 +52,7 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider --no-check-certificate https://localhost:8080/health || exit 1
 
 # Run the application
 CMD ["./main"]

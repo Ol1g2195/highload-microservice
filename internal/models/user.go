@@ -16,15 +16,15 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Email     string `json:"email" binding:"required,email"`
-	FirstName string `json:"first_name" binding:"required"`
-	LastName  string `json:"last_name" binding:"required"`
+	Email     string `json:"email" binding:"required,email,email_domain" validate:"required,email,email_domain,no_sql_injection,no_xss"`
+	FirstName string `json:"first_name" binding:"required" validate:"required,min=1,max=100,safe_string,no_sql_injection,no_xss"`
+	LastName  string `json:"last_name" binding:"required" validate:"required,min=1,max=100,safe_string,no_sql_injection,no_xss"`
 }
 
 type UpdateUserRequest struct {
-	Email     *string `json:"email,omitempty"`
-	FirstName *string `json:"first_name,omitempty"`
-	LastName  *string `json:"last_name,omitempty"`
+	Email     *string `json:"email,omitempty" validate:"omitempty,email,email_domain,no_sql_injection,no_xss"`
+	FirstName *string `json:"first_name,omitempty" validate:"omitempty,min=1,max=100,safe_string,no_sql_injection,no_xss"`
+	LastName  *string `json:"last_name,omitempty" validate:"omitempty,min=1,max=100,safe_string,no_sql_injection,no_xss"`
 }
 
 type UserListResponse struct {
@@ -33,4 +33,3 @@ type UserListResponse struct {
 	Page  int    `json:"page"`
 	Limit int    `json:"limit"`
 }
-

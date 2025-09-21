@@ -508,19 +508,190 @@ kubectl exec -n highload-microservice deploy/kafka -- kafka-topics --bootstrap-s
 
 ## 🔒 Безопасность
 
-### Реализованные меры
-- **Валидация входных данных** на всех уровнях
-- **SQL injection protection** через prepared statements
-- **Non-root пользователь** в Docker контейнере
-- **Secrets management** в Kubernetes
-- **Rate limiting** через Ingress
+### 🛡️ Enterprise-Level Security Features
 
-### Рекомендации для продакшена
-- Использование HTTPS/TLS
-- Аутентификация и авторизация (JWT, OAuth2)
-- Валидация и санитизация всех входных данных
-- Мониторинг безопасности
-- Регулярные обновления зависимостей
+Наш микросервис реализует комплексную систему безопасности enterprise-уровня:
+
+#### 🔐 Аутентификация и Авторизация
+- **JWT токены** с refresh token механизмом
+- **Ролевая модель** (admin, user)
+- **API ключи** с настраиваемыми разрешениями
+- **Защищенные пароли** с bcrypt хешированием
+- **Сессии** с автоматическим истечением
+
+#### 🔒 HTTPS/TLS Шифрование
+- **TLS 1.2+** для всех соединений
+- **Self-signed сертификаты** для разработки
+- **HSTS заголовки** для принуждения HTTPS
+- **Perfect Forward Secrecy** поддержка
+
+#### ⚡ Rate Limiting и DDoS Protection
+- **Адаптивный rate limiting** (60 req/min общий, 5 req/15min для auth)
+- **DDoS защита** с автоматической блокировкой IP
+- **Burst handling** для пиковых нагрузок
+- **IP whitelist/blacklist** поддержка
+
+#### 🛡️ Валидация и Санитизация
+- **Comprehensive input validation** с кастомными правилами
+- **SQL injection protection** на всех уровнях
+- **XSS protection** с Content Security Policy
+- **Strong password validation** (8-128 chars, 3+ character types)
+- **Email domain validation** с блокировкой временных email
+
+#### 🔐 Безопасные Переменные Окружения
+- **AES-256-GCM шифрование** для секретов
+- **Secret management utility** для управления ключами
+- **Environment validation** при запуске
+- **Secure defaults** с предупреждениями
+
+#### 📊 Security Headers и CORS
+- **Complete security headers** (CSP, HSTS, X-Frame-Options, etc.)
+- **Configurable CORS** с whitelist origins
+- **Request ID tracking** для аудита
+- **Server information hiding**
+
+#### 🔍 Расширенное Логирование Безопасности
+- **Security event auditing** с детальной информацией
+- **Threat detection** (brute force, suspicious activity, rate limit abuse)
+- **Risk scoring** для всех событий
+- **Real-time alerts** для критических событий
+- **Security metrics** и статистика
+
+### 🚨 Типы Детектируемых Угроз
+
+#### Authentication Threats
+- **Brute force attacks** (5+ failed logins in 15 min)
+- **Credential stuffing** attempts
+- **Session hijacking** attempts
+- **Token manipulation** attempts
+
+#### Authorization Threats
+- **Privilege escalation** attempts
+- **Unauthorized access** to admin endpoints
+- **API key abuse** detection
+- **Role manipulation** attempts
+
+#### Input-based Threats
+- **SQL injection** attempts
+- **XSS attacks** (script injection, event handlers)
+- **Command injection** attempts
+- **Path traversal** attempts
+- **Suspicious user agents** (scanners, bots)
+
+#### Infrastructure Threats
+- **DDoS attacks** (100+ requests in 1 min)
+- **Rate limit abuse** (10+ violations in 1 hour)
+- **Resource exhaustion** attempts
+- **Port scanning** detection
+
+### 📈 Security Monitoring Endpoints
+
+#### Admin Security Dashboard
+```http
+GET /admin/security/stats      # Security statistics
+GET /admin/security/alerts     # Active security alerts  
+GET /admin/security/events     # Recent security events
+GET /admin/security/threats    # Threat intelligence
+GET /admin/security/health     # Security system health
+```
+
+#### DDoS Protection Monitoring
+```http
+GET /admin/ddos-stats          # DDoS protection statistics
+```
+
+### 🔧 Security Configuration
+
+#### Environment Variables
+```bash
+# Authentication
+JWT_SECRET=enc:your-encrypted-jwt-secret
+JWT_EXPIRATION_HOURS=24
+REFRESH_EXPIRATION_DAYS=7
+API_KEY_LENGTH=32
+
+# Rate Limiting
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS_PER_MINUTE=60
+RATE_LIMIT_BURST_SIZE=10
+RATE_LIMIT_AUTH_REQUESTS_PER_MINUTE=5
+RATE_LIMIT_AUTH_BURST_SIZE=2
+
+# Security Headers
+SECURITY_CONTENT_TYPE_NOSNIFF=true
+SECURITY_FRAME_DENY=true
+SECURITY_XSS_PROTECTION=true
+SECURITY_REFERRER_POLICY=strict-origin-when-cross-origin
+SECURITY_CSP=default-src 'self'; script-src 'self' 'unsafe-inline'...
+
+# CORS
+CORS_ALLOWED_ORIGINS=https://localhost:3000,https://127.0.0.1:3000
+CORS_ALLOWED_METHODS=GET,POST,PUT,DELETE,OPTIONS,HEAD
+CORS_ALLOW_CREDENTIALS=true
+
+# Encryption
+ENCRYPTION_KEY=your-base64-encoded-32-byte-key
+```
+
+### 🛠️ Security Management Tools
+
+#### Secrets Management
+```bash
+# Generate encryption key
+go run cmd/secrets/main.go generate-key
+
+# Set secure secrets
+go run cmd/secrets/main.go set JWT_SECRET
+go run cmd/secrets/main.go set DB_PASSWORD
+go run cmd/secrets/main.go set REDIS_PASSWORD
+
+# Validate all secrets
+go run cmd/secrets/main.go validate
+```
+
+#### Security Testing
+```bash
+# Test authentication system
+powershell -ExecutionPolicy Bypass -File scripts/test-auth.ps1
+
+# Test HTTPS functionality  
+powershell -ExecutionPolicy Bypass -File scripts/test-https.ps1
+```
+
+### 📊 Security Metrics
+
+Система отслеживает следующие метрики:
+- **Total Security Events** - общее количество событий безопасности
+- **Blocked Requests** - заблокированные запросы
+- **High Risk Events** - события высокого риска (risk score > 50)
+- **Active Threats** - активные угрозы
+- **Login Failures** - неудачные попытки входа
+- **Access Denied** - отказы в доступе
+- **Rate Limit Hits** - срабатывания rate limiting
+- **DDoS Attempts** - попытки DDoS атак
+- **SQL Injection Attempts** - попытки SQL инъекций
+- **XSS Attempts** - попытки XSS атак
+
+### 🚨 Security Alerts
+
+Система генерирует алерты для:
+- **Brute Force Attacks** (risk score: 75)
+- **Persistent Rate Limiting** (risk score: 70)  
+- **Suspicious Activity** (risk score: 60)
+- **Multiple Security Violations** (risk score: 80+)
+
+### 🔒 Production Security Checklist
+
+- ✅ **HTTPS/TLS** enabled with valid certificates
+- ✅ **Strong JWT secrets** (not default values)
+- ✅ **Secure database passwords** (encrypted)
+- ✅ **Rate limiting** configured appropriately
+- ✅ **CORS** configured for production domains
+- ✅ **Security headers** properly set
+- ✅ **Input validation** on all endpoints
+- ✅ **Security logging** enabled and monitored
+- ✅ **Regular security audits** scheduled
+- ✅ **Dependency updates** automated
 
 ## 📈 Мониторинг в продакшене
 
