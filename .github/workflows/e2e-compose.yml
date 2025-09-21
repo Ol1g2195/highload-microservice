@@ -20,8 +20,8 @@ jobs:
 
       - name: Start stack
         run: |
-          docker-compose up -d
-          docker-compose ps
+          docker compose up -d
+          docker compose ps
 
       - name: Wait for app health
         shell: bash
@@ -60,10 +60,10 @@ jobs:
 
       - name: Show logs on failure
         if: failure()
-        run: docker-compose logs app
+        run: docker compose logs app
 
       - name: Teardown
         if: always()
-        run: docker-compose down -v
+        run: docker compose down -v
 
 

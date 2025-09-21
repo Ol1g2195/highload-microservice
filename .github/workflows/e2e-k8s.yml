@@ -56,21 +56,31 @@ jobs:
         run: |
           for i in {1..60}; do
             code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/health || true)
-            if [ "$code" = "200" ]; then exit 0; fi
+            if [ "$code" = "200" ]; then 
+              echo "App is healthy"
+              exit 0
+            fi
+            echo "Waiting for app health... attempt $i/60 (code: $code)"
             sleep 2
           done
-          echo "App is not healthy" >&2; exit 1
+          echo "App is not healthy after 60 attempts" >&2; exit 1
 
       - name: Smoke - create user
         id: create_user
         shell: bash
         run: |
+          echo "Creating user..."
           resp=$(curl -s -X POST http://localhost:8080/api/v1/users \
             -H "Content-Type: application/json" \
             -d '{"email":"user@example.com","first_name":"John","last_name":"Doe"}')
-          echo "$resp"
+          echo "Response: $resp"
           id=$(echo "$resp" | jq -r '.id')
-          if [ -z "$id" ] || [ "$id" = "null" ]; then echo "create user failed"; exit 1; fi
+          if [ -z "$id" ] || [ "$id" = "null" ]; then 
+            echo "create user failed - response: $resp"
+            curl -v http://localhost:8080/health
+            exit 1
+          fi
+          echo "User created with ID: $id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
       - name: Smoke - create event
@@ -89,7 +99,17 @@ jobs:
       - name: Diagnostics on failure
         if: failure()
         run: |
+          echo "=== Pods status ==="
+          kubectl get pods -n highload-microservice
+          echo "=== Services ==="
+          kubectl get svc -n highload-microservice
+          echo "=== Events ==="
+          kubectl get events -n highload-microservice --sort-by='.lastTimestamp'
+          echo "=== App logs ==="
           kubectl logs -l app=highload-microservice -n highload-microservice --tail=300 || true
-          kubectl get pods,svc,events -n highload-microservice
+          echo "=== Port-forward logs ==="
+          cat pf.log || true
+          echo "=== Health check ==="
+          curl -v http://localhost:8080/health || true
 
 
