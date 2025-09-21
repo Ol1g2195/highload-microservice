@@ -41,7 +41,7 @@ jobs:
         id: create_user
         shell: bash
         run: |
-          resp=$(curl -s -X POST http://localhost:8080/api/v1/users \
+          resp=$(curl -s -X POST http://localhost:8080/api/v1/users/ \
             -H "Content-Type: application/json" \
             -d '{"email":"user@example.com","first_name":"John","last_name":"Doe"}')
           echo "$resp"
@@ -53,7 +53,7 @@ jobs:
         shell: bash
         run: |
           id="${{ steps.create_user.outputs.id }}"
-          curl -s -X POST http://localhost:8080/api/v1/events \
+          curl -s -X POST http://localhost:8080/api/v1/events/ \
             -H "Content-Type: application/json" \
             -d "{\"user_id\":\"$id\",\"type\":\"smoke_event\",\"data\":\"{\\\"action\\\":\\\"login\\\"}\"}" | jq .
 

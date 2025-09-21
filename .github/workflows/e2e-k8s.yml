@@ -74,7 +74,7 @@ jobs:
           curl -v http://localhost:8080/health
           echo ""
           echo "Creating user with verbose output..."
-          resp=$(curl -v -X POST http://localhost:8080/api/v1/users \
+          resp=$(curl -v -X POST http://localhost:8080/api/v1/users/ \
             -H "Content-Type: application/json" \
             -d '{"email":"user@example.com","first_name":"John","last_name":"Doe"}' 2>&1)
           echo "Full response: $resp"
@@ -94,7 +94,7 @@ jobs:
         shell: bash
         run: |
           id="${{ steps.create_user.outputs.id }}"
-          curl -s -X POST http://localhost:8080/api/v1/events \
+          curl -s -X POST http://localhost:8080/api/v1/events/ \
             -H "Content-Type: application/json" \
             -d "{\"user_id\":\"$id\",\"type\":\"smoke_event\",\"data\":\"{\\\"action\\\":\\\"login\\\"}\"}" | jq .
 
