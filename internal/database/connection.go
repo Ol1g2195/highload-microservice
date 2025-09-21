@@ -33,11 +33,26 @@ func NewConnection(cfg config.DatabaseConfig) (*sql.DB, error) {
 
 // RunMigrations executes database migrations
 func RunMigrations(db *sql.DB) error {
-	// Read migrations file
-	migrationsPath := filepath.Join("internal", "database", "migrations.sql")
-	migrations, err := ioutil.ReadFile(migrationsPath)
+	// Try different possible paths for migrations file
+	possiblePaths := []string{
+		"internal/database/migrations.sql",
+		"./internal/database/migrations.sql",
+		"/app/internal/database/migrations.sql",
+		"migrations.sql",
+	}
+	
+	var migrations []byte
+	var err error
+	
+	for _, path := range possiblePaths {
+		migrations, err = ioutil.ReadFile(path)
+		if err == nil {
+			break
+		}
+	}
+	
 	if err != nil {
-		return fmt.Errorf("failed to read migrations file: %w", err)
+		return fmt.Errorf("failed to read migrations file from any path: %w", err)
 	}
 
 	// Execute migrations
