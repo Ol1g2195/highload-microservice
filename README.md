@@ -29,6 +29,23 @@
 - kubectl
 - Docker registry (опционально)
 
+## 📦 Релизы и пакеты
+
+### Последний релиз
+- **Версия**: v1.0.0
+- **Docker образ**: `ghcr.io/oleg2195/highload-microservice:latest`
+- **Скачать**: [Releases](https://github.com/Ol1g2195/highload-microservice/releases)
+
+### Быстрый старт с Docker
+```bash
+# Скачать и запустить готовый образ
+docker run -p 8080:8080 ghcr.io/oleg2195/highload-microservice:latest
+```
+
+### GitHub Packages
+- **Контейнеры**: [Packages](https://github.com/Ol1g2195/highload-microservice/pkgs/container/highload-microservice)
+- **Документация**: [PACKAGES.md](PACKAGES.md)
+
 ## 🛠 Установка и запуск
 
 ### 1. Клонирование репозитория
@@ -447,20 +464,6 @@ bash scripts/smoke.sh
 Запуск:
 - Автоматически на push/pull_request в ветку `main`
 - Вручную: Actions → выбрать workflow → Run workflow
-
-### Команды для пуша в ветку main
-
-```bash
-# Создать/переключиться на main локально
-git checkout -B main
-
-# Добавить изменения и закоммитить
-git add .
-git commit -m "docs: add e2e (compose+k8s) run instructions"
-
-# Отправить в origin/main
-git push -u origin main
-```
 
 ## ✅ Полная проверка работоспособности (чек‑лист)
 
