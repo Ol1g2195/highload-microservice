@@ -27,12 +27,19 @@ func NewAuthHandler(authService *services.AuthService, securityAuditor *security
 
 // Login handles user login
 func (h *AuthHandler) Login(c *gin.Context) {
-	var req models.LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Errorf("Invalid login request: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
-		return
-	}
+    // The body is already bound by validation middleware; read from context to avoid EOF
+    val, exists := c.Get("validated_data")
+    if !exists {
+        h.logger.Errorf("Validated login data not found in context")
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": "missing validated data"})
+        return
+    }
+    req, ok := val.(*models.LoginRequest)
+    if !ok || req == nil {
+        h.logger.Errorf("Validated login data has invalid type")
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": "invalid validated data"})
+        return
+    }
 
 	response, err := h.authService.AuthenticateUser(c.Request.Context(), req)
 	if err != nil {
@@ -58,18 +65,24 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		c.GetString("request_id"),
 	)
 
-	h.logger.Infof("User logged in successfully: %s", req.Email)
+    h.logger.Infof("User logged in successfully: %s", req.Email)
 	c.JSON(http.StatusOK, response)
 }
 
 // RefreshToken handles token refresh
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
-	var req models.RefreshTokenRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Errorf("Invalid refresh token request: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": err.Error()})
-		return
-	}
+    val, exists := c.Get("validated_data")
+    if !exists {
+        h.logger.Errorf("Validated refresh data not found in context")
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": "missing validated data"})
+        return
+    }
+    req, ok := val.(*models.RefreshTokenRequest)
+    if !ok || req == nil {
+        h.logger.Errorf("Validated refresh data has invalid type")
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": "invalid validated data"})
+        return
+    }
 
 	response, err := h.authService.RefreshToken(c.Request.Context(), req)
 	if err != nil {
@@ -78,7 +91,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	h.logger.Info("Token refreshed successfully")
+    h.logger.Info("Token refreshed successfully")
 	c.JSON(http.StatusOK, response)
 }
 

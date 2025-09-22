@@ -112,7 +112,7 @@ jobs:
     - name: Authentication system test (HTTP)
       run: |
         # Start application
-        docker-compose up -d
+        docker compose up -d
         sleep 30
         
         # Test authentication endpoints
@@ -127,12 +127,12 @@ jobs:
         echo "✅ Authentication system working"
         
         # Cleanup
-        docker-compose down
+        docker compose down
 
     - name: Rate limiting test (HTTP)
       run: |
         # Start application
-        docker-compose up -d
+        docker compose up -d
         sleep 30
         
         # Test rate limiting
@@ -146,12 +146,12 @@ jobs:
         echo "✅ Rate limiting working"
         
         # Cleanup
-        docker-compose down
+        docker compose down
 
     - name: Input validation test (HTTP)
       run: |
         # Start application
-        docker-compose up -d
+        docker compose up -d
         sleep 30
         
         # Test SQL injection protection
@@ -167,7 +167,7 @@ jobs:
         echo "✅ Input validation working"
         
         # Cleanup
-        docker-compose down
+        docker compose down
 
     - name: Upload security reports
       uses: actions/upload-artifact@v4
