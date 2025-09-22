@@ -78,13 +78,10 @@ services:
         condition: service_started
     ports:
       - "8080:8080"  # HTTP
-      - "8443:8080"  # HTTPS
     environment:
       SERVER_HOST: 0.0.0.0
       SERVER_PORT: 8080
-      USE_TLS: "true"
-      TLS_CERT: "/app/certs/server.crt"
-      TLS_KEY: "/app/certs/server.key"
+      USE_TLS: "false"
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: postgres

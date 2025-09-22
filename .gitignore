@@ -1,0 +1,10 @@
+certs/
+*.key
+*.crt
+gosec-report*.json
+*.sarif
+**/.DS_Store
+**/node_modules/
+**/bin/
+**/dist/
+

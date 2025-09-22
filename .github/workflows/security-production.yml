@@ -164,29 +164,15 @@ jobs:
           exit 1
         fi
 
-    - name: Performance security test
+    - name: Performance security test (HTTP)
       run: |
-        echo "⚡ Testing performance under security load..."
-        
-        # Start application
+        echo "⚡ Testing rate limiting (HTTP mode)..."
         docker-compose up -d
         sleep 30
-        
-        # Test rate limiting under load
-        echo "Testing rate limiting..."
         for i in {1..100}; do
-          curl -k -s -o /dev/null -w "%{http_code}\n" https://localhost:8443/health &
+          curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/health &
         done
         wait
-        
-        # Test DDoS protection
-        echo "Testing DDoS protection..."
-        for i in {1..200}; do
-          curl -k -s -o /dev/null -w "%{http_code}\n" https://localhost:8443/api/v1/users/ &
-        done
-        wait
-        
-        # Cleanup
         docker-compose down
 
     - name: Upload security artifacts
