@@ -116,10 +116,10 @@ jobs:
         sleep 30
         
         # Test authentication endpoints
-        curl -X POST http://localhost:8080/api/v1/auth/login \
+        curl -s -o /dev/null -w "%{http_code}\n" -X POST http://localhost:8080/api/v1/auth/login \
           -H "Content-Type: application/json" \
           -d '{"email":"invalid@test.com","password":"wrong"}' \
-          -w "%{http_code}" | grep -q "401" || {
+        | grep -q "401" || {
           echo "❌ Authentication not working properly"
           exit 1
         }
