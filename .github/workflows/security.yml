@@ -109,8 +109,24 @@ jobs:
       run: |
         echo "Skipping strict headers test in CI (HTTP mode)"
 
-    # Skip app runtime checks in this workflow to avoid infra flakiness
-    # (covered by e2e-compose/e2e-k8s). Security Audit remains static + secret scans.
+    - name: Start application (HTTP)
+      env:
+        USE_TLS: "false"
+      run: |
+        docker compose up -d
+        echo "Waiting for /health..."
+        for i in {1..60}; do
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/health || true)
+          if [ "$code" = "200" ]; then echo "App is healthy"; exit 0; fi
+          echo "Attempt $i/60: code=$code"; sleep 5
+        done
+        echo "App failed to become healthy" >&2
+        docker compose logs app --tail=100 || true
+        exit 1
+
+    - name: Teardown
+      if: always()
+      run: docker compose down -v
 
     - name: Upload security reports
       uses: actions/upload-artifact@v4
