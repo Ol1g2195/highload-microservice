@@ -25,11 +25,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.54.2
-          args: |
-            --timeout=5m
-            --modules-download-mode=mod
-            --out-format=github-actions
+          version: v1.64.8
+          args: --timeout=5m --out-format=github-actions
       - name: Verify config
         run: |
           golangci-lint config verify
