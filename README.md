@@ -142,7 +142,22 @@ eval $(minikube docker-env)
 docker build -t highload-microservice:latest .
 ```
 
-### 2. Практическое развертывание (Docker Desktop Kubernetes)
+### 2. Развертывание через Helm
+
+```bash
+# Установка из локального chart
+helm upgrade --install highload charts/highload-microservice \
+  -n highload-microservice --create-namespace \
+  --set image.repository=docker.io/<username>/highload-microservice \
+  --set image.tag=latest \
+  --set env.DDOS_PROTECTION_ENABLED="false"
+
+# Проверка
+kubectl get pods -n highload-microservice
+kubectl get svc  -n highload-microservice
+```
+
+### 3. Практическое развертывание (Docker Desktop Kubernetes)
 
 Ниже — проверенная последовательность для Docker Desktop Kubernetes (узел `desktop-control-plane`).
 
@@ -204,7 +219,7 @@ kubectl get pods -n highload-microservice
 kubectl get services -n highload-microservice
 ```
 
-### 3. Доступ к приложению
+### 4. Доступ к приложению
 
 ```bash
 # Получение внешнего IP
@@ -214,7 +229,7 @@ kubectl get service highload-service -n highload-microservice
 kubectl port-forward service/highload-service 8080:80 -n highload-microservice
 ```
 
-### 4. Настройки Kafka
+### 5. Настройки Kafka
 
 В `k8s/kafka-deployment.yaml` настроены корректные слушатели и пробы:
 ```yaml
@@ -234,6 +249,12 @@ kubectl port-forward service/highload-service 8080:80 -n highload-microservice
 ### Базовый URL
 - Локально: `http://localhost:8080`
 - Kubernetes: `http://<external-ip>`
+
+### OpenAPI/Swagger
+- Спецификация: `api/openapi.yaml`
+- Просмотр локально:
+  - Быстро: `npx swagger-ui-watcher ./api/openapi.yaml`
+  - Или импортируйте файл в `editor.swagger.io`
 
 ### Endpoints
 
@@ -365,11 +386,10 @@ Client → HTTP API → Service Layer → Database/Cache
 - Проверки подключения к базе данных, Redis и Kafka
 - Kubernetes liveness и readiness probes
 
-### Метрики
-- Количество обработанных запросов
-- Время отклика API
-- Использование ресурсов (CPU, память)
-- Статистика Kafka (сообщения отправлены/получены)
+### Метрики и профилирование
+- Prometheus endpoint: `GET /metrics`
+- pprof endpoints: `GET /debug/pprof/` и дочерние профили
+- Примеры: латентность HTTP, RPS, ошибки (Prometheus client)
 
 ## 🚀 Производительность
 
@@ -400,16 +420,19 @@ go test -cover ./...
 go test -bench ./...
 ```
 
-### Нагрузочное тестирование
+### Нагрузочное тестирование (k6)
 ```bash
-# Установка hey (HTTP load testing tool)
+# Быстрый smoke тест (Docker)
+make k6-smoke
+
+# Параметры (пример)
+# VUS=20 DURATION=2m BASE_URL=http://host.docker.internal:8080 make k6-smoke
+```
+
+Для простых проверок можно использовать и hey:
+```bash
 go install github.com/rakyll/hey@latest
-
-# Тест создания пользователей
-hey -n 1000 -c 10 -m POST -H "Content-Type: application/json" -d '{"email":"test@example.com","first_name":"Test","last_name":"User"}' http://localhost:8080/api/v1/users
-
-# Тест получения пользователей
-hey -n 1000 -c 10 http://localhost:8080/api/v1/users
+hey -n 200 -c 20 http://localhost:8080/health
 ```
 
 ## 🧪 E2E запуск (smoke)
@@ -418,7 +441,7 @@ hey -n 1000 -c 10 http://localhost:8080/api/v1/users
 
 ```bash
 # 1) Запустить весь стек
-docker-compose up -d
+docker compose up -d
 
 # 2) Проверить здоровье сервиса
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/health
@@ -430,7 +453,7 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/health
 bash scripts/smoke.sh
 
 # 4) Остановить окружение
-docker-compose down -v
+docker compose down -v
 ```
 
 ### Kubernetes
@@ -726,6 +749,9 @@ powershell -ExecutionPolicy Bypass -File scripts/test-https.ps1
 │   └── worker/            # Worker pool
 ├── k8s/                   # Kubernetes манифесты
 ├── docker-compose.yml     # Docker Compose конфигурация
+├── charts/                # Helm chart
+├── api/openapi.yaml       # OpenAPI спецификация
+├── load/k6/               # Нагрузочные сценарии k6
 ├── Dockerfile            # Docker образ
 └── README.md             # Документация
 ```
@@ -736,6 +762,23 @@ powershell -ExecutionPolicy Bypass -File scripts/test-https.ps1
 - **Контекст**: используем context.Context для отмены операций
 - **Горутины**: всегда используем WaitGroup для синхронизации
 - **Ресурсы**: закрываем все ресурсы (defer)
+ 
 
+## 🧰 Makefile (основные команды)
 
+```bash
+# Сборка/запуск/тесты
+make build
+make run
+make test
+make cover
 
+# Статический анализ
+make lint
+
+# Нагрузочные тесты
+make k6-smoke
+
+# Docker
+make build-docker
+```
