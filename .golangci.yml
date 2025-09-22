@@ -18,8 +18,7 @@ linters:
     - typecheck
     - unused
     - revive
-  disable:
-
+  disable: []
 
 linters-settings:
   gocyclo:
