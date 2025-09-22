@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"highload-microservice/internal/models"
 	"highload-microservice/internal/services"
@@ -26,17 +27,29 @@ func NewUserHandler(userService *services.UserService, logger *logrus.Logger) *U
 
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	h.logger.Info("CreateUser handler called")
-	
-	var req models.CreateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Errorf("Invalid request body: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body", "details": err.Error()})
+
+	// Use validated data produced by validation middleware
+	validatedData, exists := c.Get("validated_data")
+	if !exists {
+		h.logger.Error("Validated data not found in context for create user")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+	req, ok := validatedData.(*models.CreateUserRequest)
+	if !ok {
+		h.logger.Error("Invalid type for validated data in create user handler")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
 	h.logger.Infof("Creating user with email: %s", req.Email)
-	user, err := h.userService.CreateUser(c.Request.Context(), req)
+	user, err := h.userService.CreateUser(c.Request.Context(), *req)
 	if err != nil {
+		// Map duplicate email (unique constraint) to 409 if detected
+		if strings.Contains(strings.ToLower(err.Error()), "duplicate") || strings.Contains(strings.ToLower(err.Error()), "unique") || strings.Contains(strings.ToLower(err.Error()), "23505") {
+			c.JSON(http.StatusConflict, gin.H{"error": "User with this email already exists"})
+			return
+		}
 		h.logger.Errorf("Failed to create user: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user", "details": err.Error()})
 		return
@@ -145,4 +158,3 @@ func (h *UserHandler) ListUsers(c *gin.Context) {
 
 	c.JSON(http.StatusOK, users)
 }
-
