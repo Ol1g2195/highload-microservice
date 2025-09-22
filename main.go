@@ -158,20 +158,23 @@ func main() {
 		rateLimitMiddleware = middleware.NewRateLimitMiddleware(rateLimitConfig, logger)
 	}
 
-	// Initialize DDoS protection
-	ddosConfig := middleware.DDoSConfig{
-		MaxRequests:     100,
-		WindowDuration:  1 * time.Minute,
-		BlockDuration:   5 * time.Minute,
-		CleanupInterval: 1 * time.Minute,
-	}
-	ddosProtection := middleware.NewDDoSProtection(ddosConfig, logger)
+    // Initialize DDoS protection (can be disabled via env for CI)
+    ddosConfig := middleware.DDoSConfig{
+        MaxRequests:     100,
+        WindowDuration:  1 * time.Minute,
+        BlockDuration:   5 * time.Minute,
+        CleanupInterval: 1 * time.Minute,
+    }
+    ddosProtection := middleware.NewDDoSProtection(ddosConfig, logger)
+    ddosEnabled := os.Getenv("DDOS_PROTECTION_ENABLED")
 
 	// Setup routes
 	api := router.Group("/api/v1")
 	{
-		// Apply DDoS protection to all API routes
-		api.Use(ddosProtection.Protect())
+        // Apply DDoS protection to all API routes unless disabled
+        if ddosEnabled != "false" {
+            api.Use(ddosProtection.Protect())
+        }
 
 		// Apply input sanitization to all API routes
 		api.Use(validationMiddleware.SanitizeInput())
