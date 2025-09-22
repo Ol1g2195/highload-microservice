@@ -37,7 +37,7 @@ jobs:
     - name: Install security tools
       run: |
         # Install comprehensive security tools
-        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+        go install github.com/securego/gosec/v2/cmd/gosec@latest
         go install golang.org/x/vuln/cmd/govulncheck@latest
         go install honnef.co/go/tools/cmd/staticcheck@latest
         
@@ -204,7 +204,7 @@ jobs:
 
     - name: Upload SARIF files
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: always() && hashFiles('gosec-report.sarif') != ''
       with:
         sarif_file: gosec-report.sarif
 

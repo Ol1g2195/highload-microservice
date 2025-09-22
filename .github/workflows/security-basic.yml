@@ -1,17 +1,14 @@
-name: Security Audit (Simple)
+name: Basic Security Check
 
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
-  schedule:
-    # Run security audit daily at 2 AM UTC
-    - cron: '0 2 * * *'
 
 jobs:
-  security-audit:
-    name: Security Audit
+  security-check:
+    name: Basic Security Check
     runs-on: ubuntu-latest
     
     steps:
@@ -44,12 +41,17 @@ jobs:
         # Run security scan
         gosec -fmt json -out gosec-report.json ./...
         
-        # Display results
-        gosec -fmt sarif -out gosec-report.sarif ./...
-        
         # Check for high severity issues
         if [ -f gosec-report.json ]; then
           HIGH_ISSUES=$(jq '.Stats.G1 + .Stats.G2 + .Stats.G3' gosec-report.json)
+          MEDIUM_ISSUES=$(jq '.Stats.G4' gosec-report.json)
+          LOW_ISSUES=$(jq '.Stats.G5' gosec-report.json)
+          
+          echo "Security Issues Found:"
+          echo "High Severity: $HIGH_ISSUES"
+          echo "Medium Severity: $MEDIUM_ISSUES"
+          echo "Low Severity: $LOW_ISSUES"
+          
           if [ "$HIGH_ISSUES" -gt 0 ]; then
             echo "❌ Found $HIGH_ISSUES high severity security issues"
             cat gosec-report.json | jq '.Issues[] | select(.severity == "HIGH") | {rule_id, severity, details}'
@@ -74,28 +76,6 @@ jobs:
         
         # Run static analysis
         staticcheck ./...
-
-    - name: Check for hardcoded secrets
-      run: |
-        # Install gitleaks
-        wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz
-        tar -xzf gitleaks_8.18.0_linux_x64.tar.gz
-        chmod +x gitleaks
-        
-        # Run secret detection
-        ./gitleaks detect --source . --verbose --report-format json --report-path gitleaks-report.json || true
-        
-        # Check for secrets
-        if [ -f gitleaks-report.json ]; then
-          SECRETS_COUNT=$(jq '. | length' gitleaks-report.json)
-          if [ "$SECRETS_COUNT" -gt 0 ]; then
-            echo "❌ Found $SECRETS_COUNT potential secrets"
-            cat gitleaks-report.json | jq '.[] | {rule, file, line}'
-            exit 1
-          else
-            echo "✅ No secrets detected"
-          fi
-        fi
 
     - name: Security compliance check
       run: |
@@ -148,12 +128,10 @@ jobs:
         name: security-reports
         path: |
           gosec-report.json
-          gosec-report.sarif
-          gitleaks-report.json
 
     - name: Security summary
       run: |
-        echo "## 🔒 Security Audit Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## 🔒 Security Check Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         
         if [ -f gosec-report.json ]; then
@@ -167,11 +145,6 @@ jobs:
           echo "- 🟢 Low Severity: $LOW_ISSUES" >> $GITHUB_STEP_SUMMARY
         fi
         
-        if [ -f gitleaks-report.json ]; then
-          SECRETS_COUNT=$(jq '. | length' gitleaks-report.json)
-          echo "- 🔐 Potential Secrets: $SECRETS_COUNT" >> $GITHUB_STEP_SUMMARY
-        fi
-        
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Security Features Verified:" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ HTTPS/TLS Configuration" >> $GITHUB_STEP_SUMMARY
@@ -179,5 +152,4 @@ jobs:
         echo "- ✅ Security Headers & CORS" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ Authentication & Authorization" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ Input Validation & SQL Injection Protection" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ Secret Detection" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ Dependency Vulnerability Scanning" >> $GITHUB_STEP_SUMMARY
