@@ -34,12 +34,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": "missing validated data"})
         return
     }
-    req, ok := val.(*models.LoginRequest)
-    if !ok || req == nil {
+    // val is *models.LoginRequest; dereference to value for service call
+    reqPtr, ok := val.(*models.LoginRequest)
+    if !ok || reqPtr == nil {
         h.logger.Errorf("Validated login data has invalid type")
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": "invalid validated data"})
         return
     }
+    req := *reqPtr
 
 	response, err := h.authService.AuthenticateUser(c.Request.Context(), req)
 	if err != nil {
@@ -77,12 +79,13 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": "missing validated data"})
         return
     }
-    req, ok := val.(*models.RefreshTokenRequest)
-    if !ok || req == nil {
+    reqPtr, ok := val.(*models.RefreshTokenRequest)
+    if !ok || reqPtr == nil {
         h.logger.Errorf("Validated refresh data has invalid type")
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request", "details": "invalid validated data"})
         return
     }
+    req := *reqPtr
 
 	response, err := h.authService.RefreshToken(c.Request.Context(), req)
 	if err != nil {
