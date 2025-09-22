@@ -1,14 +1,14 @@
 package middleware
 
 import (
-    "net/http"
-    "reflect"
-    "strings"
+	"net/http"
+	"reflect"
+	"strings"
 
-    "highload-microservice/internal/validation"
+	"highload-microservice/internal/validation"
 
-    "github.com/gin-gonic/gin"
-    "github.com/sirupsen/logrus"
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 // ValidationMiddleware provides validation middleware
@@ -27,7 +27,7 @@ func NewValidationMiddleware(logger *logrus.Logger) *ValidationMiddleware {
 			}
 			return v
 		}(),
-		logger:    logger,
+		logger: logger,
 	}
 }
 
@@ -42,15 +42,15 @@ func (vm *ValidationMiddleware) ValidateStruct(obj interface{}) []validation.Val
 // ValidateRequest validates request body and returns validation errors
 func (vm *ValidationMiddleware) ValidateRequest(obj interface{}) gin.HandlerFunc {
 	return func(c *gin.Context) {
-        // Create a fresh instance per request based on provided type
-        t := reflect.TypeOf(obj)
-        if t.Kind() == reflect.Ptr {
-            t = t.Elem()
-        }
-        newVal := reflect.New(t).Interface()
+		// Create a fresh instance per request based on provided type
+		t := reflect.TypeOf(obj)
+		if t.Kind() == reflect.Ptr {
+			t = t.Elem()
+		}
+		newVal := reflect.New(t).Interface()
 
-        // Bind JSON to new instance
-        if err := c.ShouldBindJSON(newVal); err != nil {
+		// Bind JSON to new instance
+		if err := c.ShouldBindJSON(newVal); err != nil {
 			vm.logger.Warnf("Request binding failed: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   "Invalid request format",
@@ -61,7 +61,7 @@ func (vm *ValidationMiddleware) ValidateRequest(obj interface{}) gin.HandlerFunc
 		}
 
 		// Validate struct
-        if errors := vm.ValidateStruct(newVal); len(errors) > 0 {
+		if errors := vm.ValidateStruct(newVal); len(errors) > 0 {
 			vm.logger.Warnf("Validation failed for %s: %v", c.Request.URL.Path, errors)
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   "Validation failed",
@@ -72,7 +72,7 @@ func (vm *ValidationMiddleware) ValidateRequest(obj interface{}) gin.HandlerFunc
 		}
 
 		// Store validated object in context
-        c.Set("validated_data", newVal)
+		c.Set("validated_data", newVal)
 		c.Next()
 	}
 }
@@ -156,7 +156,7 @@ func (vm *ValidationMiddleware) ValidateFileUpload(maxSize int64, allowedTypes [
 			c.Abort()
 			return
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 
 		// Check file size
 		if header.Size > maxSize {

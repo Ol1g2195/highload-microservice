@@ -122,7 +122,7 @@ func (s *EventService) ListEvents(ctx context.Context, page, limit int) (*models
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var events []models.Event
 	for rows.Next() {
@@ -187,5 +187,3 @@ func (s *EventService) cacheEvent(ctx context.Context, event *models.Event) {
 		s.logger.Errorf("Failed to cache event: %v", err)
 	}
 }
-
-

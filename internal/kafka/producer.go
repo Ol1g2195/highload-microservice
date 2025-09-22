@@ -52,5 +52,3 @@ func (p *Producer) SendEvent(ctx context.Context, event models.KafkaEvent) error
 func (p *Producer) Close() error {
 	return p.writer.Close()
 }
-
-

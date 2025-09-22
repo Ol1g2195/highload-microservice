@@ -55,7 +55,7 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	// Run migrations
 	if err := database.RunMigrations(db); err != nil {
@@ -68,20 +68,20 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failed to connect to Redis: %v", err)
 	}
-	defer redisClient.Close()
+	defer func() { _ = redisClient.Close() }()
 
 	// Initialize Kafka
 	kafkaProducer, err := kafka.NewProducer(cfg.Kafka)
 	if err != nil {
 		logger.Fatalf("Failed to create Kafka producer: %v", err)
 	}
-	defer kafkaProducer.Close()
+	defer func() { _ = kafkaProducer.Close() }()
 
 	kafkaConsumer, err := kafka.NewConsumer(cfg.Kafka)
 	if err != nil {
 		logger.Fatalf("Failed to create Kafka consumer: %v", err)
 	}
-	defer kafkaConsumer.Close()
+	defer func() { _ = kafkaConsumer.Close() }()
 
 	// Initialize security auditor
 	securityAuditor := security.NewSecurityAuditor(logger)
@@ -166,23 +166,23 @@ func main() {
 		rateLimitMiddleware = middleware.NewRateLimitMiddleware(rateLimitConfig, logger)
 	}
 
-    // Initialize DDoS protection (can be disabled via env for CI)
-    ddosConfig := middleware.DDoSConfig{
-        MaxRequests:     100,
-        WindowDuration:  1 * time.Minute,
-        BlockDuration:   5 * time.Minute,
-        CleanupInterval: 1 * time.Minute,
-    }
-    ddosProtection := middleware.NewDDoSProtection(ddosConfig, logger)
-    ddosEnabled := os.Getenv("DDOS_PROTECTION_ENABLED")
+	// Initialize DDoS protection (can be disabled via env for CI)
+	ddosConfig := middleware.DDoSConfig{
+		MaxRequests:     100,
+		WindowDuration:  1 * time.Minute,
+		BlockDuration:   5 * time.Minute,
+		CleanupInterval: 1 * time.Minute,
+	}
+	ddosProtection := middleware.NewDDoSProtection(ddosConfig, logger)
+	ddosEnabled := os.Getenv("DDOS_PROTECTION_ENABLED")
 
 	// Setup routes
 	api := router.Group("/api/v1")
 	{
-        // Apply DDoS protection to all API routes unless disabled
-        if ddosEnabled != "false" {
-            api.Use(ddosProtection.Protect())
-        }
+		// Apply DDoS protection to all API routes unless disabled
+		if ddosEnabled != "false" {
+			api.Use(ddosProtection.Protect())
+		}
 
 		// Apply input sanitization to all API routes
 		api.Use(validationMiddleware.SanitizeInput())

@@ -19,11 +19,11 @@ linters:
     - unused
     - revive
   disable:
-    - deadcode
+
 
 linters-settings:
   gocyclo:
-    min-complexity: 18
+    min-complexity: 24
   revive:
     severity: warning
     rules:

@@ -45,4 +45,3 @@ func (c *Consumer) ReadMessage(ctx context.Context) (models.KafkaEvent, error) {
 func (c *Consumer) Close() error {
 	return c.reader.Close()
 }
-

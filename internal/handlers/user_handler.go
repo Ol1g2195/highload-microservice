@@ -13,6 +13,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const errUserNotFound = "user not found"
+
 type UserHandler struct {
 	userService *services.UserService
 	logger      *logrus.Logger
@@ -71,7 +73,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	user, err := h.userService.GetUser(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Errorf("Failed to get user: %v", err)
-		if err.Error() == "user not found" {
+		if err.Error() == errUserNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
@@ -101,7 +103,7 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 	user, err := h.userService.UpdateUser(c.Request.Context(), id, req)
 	if err != nil {
 		h.logger.Errorf("Failed to update user: %v", err)
-		if err.Error() == "user not found" {
+		if err.Error() == errUserNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
@@ -124,7 +126,7 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	err = h.userService.DeleteUser(c.Request.Context(), id)
 	if err != nil {
 		h.logger.Errorf("Failed to delete user: %v", err)
-		if err.Error() == "user not found" {
+		if err.Error() == errUserNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}

@@ -56,4 +56,3 @@ func (c *Client) Ping(ctx context.Context) error {
 func (c *Client) Close() error {
 	return c.rdb.Close()
 }
-
