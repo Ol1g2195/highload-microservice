@@ -2,10 +2,6 @@ name: e2e-k8s
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   e2e:
@@ -65,43 +61,47 @@ jobs:
           done
           echo "App is not healthy after 60 attempts" >&2; exit 1
 
-      - name: Smoke - create user
+      - name: Login as admin
+        id: login
+        shell: bash
+        run: |
+          LOGIN_PAYLOAD='{"email":"admin@highload-microservice.local","password":"admin123456"}'
+          resp=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+            -H 'Content-Type: application/json' -d "$LOGIN_PAYLOAD")
+          echo "$resp" | jq . >/dev/null 2>&1 || { echo "Login response is not JSON"; echo "$resp"; exit 1; }
+          TOKEN=$(echo "$resp" | jq -r .access_token)
+          test "$TOKEN" != "null" -a -n "$TOKEN" || { echo "No access token"; echo "$resp"; exit 1; }
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke - create user (authorized)
         id: create_user
         shell: bash
         run: |
-          echo "Creating user..."
-          echo "Testing health endpoint first..."
-          curl -v http://localhost:8080/health
-          echo ""
-          echo "Creating user with verbose output..."
-          resp=$(curl -v -X POST http://localhost:8080/api/v1/users/ \
-            -H "Content-Type: application/json" \
-            -d '{"email":"user@example.com","first_name":"John","last_name":"Doe"}' 2>&1)
-          echo "Full response: $resp"
-          # Extract just the JSON response body (last line that starts with {)
-          body=$(echo "$resp" | grep '^{' | tail -1)
-          echo "Response body: $body"
-          id=$(echo "$body" | jq -r '.id' 2>/dev/null || echo "")
+          TOKEN='${{ steps.login.outputs.token }}'
+          resp=$(curl -s -X POST http://localhost:8080/api/v1/users/ \
+            -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+            -d '{"email":"user@example.com","first_name":"John","last_name":"Doe"}')
+          echo "$resp"
+          id=$(echo "$resp" | jq -r '.id')
           if [ -z "$id" ] || [ "$id" = "null" ]; then 
-            echo "create user failed - response body: $body"
-            echo "Full curl output: $resp"
-            exit 1
+            echo "create user failed"; exit 1; 
           fi
-          echo "User created with ID: $id"
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
-      - name: Smoke - create event
+      - name: Smoke - create event (authorized)
         shell: bash
         run: |
           id="${{ steps.create_user.outputs.id }}"
+          TOKEN='${{ steps.login.outputs.token }}'
           curl -s -X POST http://localhost:8080/api/v1/events/ \
-            -H "Content-Type: application/json" \
+            -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
             -d "{\"user_id\":\"$id\",\"type\":\"smoke_event\",\"data\":\"{\\\"action\\\":\\\"login\\\"}\"}" | jq .
 
-      - name: Smoke - list events
+      - name: Smoke - list events (authorized)
         shell: bash
         run: |
-          curl -s http://localhost:8080/api/v1/events?page=1&limit=10 | jq .
+          TOKEN='${{ steps.login.outputs.token }}'
+          curl -s -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/events?page=1&limit=10 | jq .
 
       - name: Diagnostics on failure
         if: failure()
