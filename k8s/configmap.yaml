@@ -19,5 +19,13 @@ data:
   KAFKA_TOPIC: "user-events"
   KAFKA_GROUP_ID: "highload-service"
   LOG_LEVEL: "info"
+  # Disable DDoS for CI e2e in k8s
+  DDOS_PROTECTION_ENABLED: "false"
+  # Rate limit settings for CI e2e in k8s
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_REQUESTS_PER_MINUTE: "600"
+  RATE_LIMIT_BURST_SIZE: "100"
+  RATE_LIMIT_AUTH_REQUESTS_PER_MINUTE: "60"
+  RATE_LIMIT_AUTH_BURST_SIZE: "20"
 
 
