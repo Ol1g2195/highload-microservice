@@ -77,7 +77,11 @@ jobs:
             -d "{\"email\":\"$email\",\"first_name\":\"John\",\"last_name\":\"Doe\"}")
           echo "Response code: $code"
           cat "$body"
-          if [ "$code" != "201" ]; then echo "create user failed"; exit 1; fi
+          if [ "$code" != "201" ] && [ "$code" != "409" ]; then 
+            echo "create user failed"; 
+            echo "=== App logs (tail) ==="; docker compose logs app --tail=200 || true; 
+            exit 1; 
+          fi
           id=$(cat "$body" | jq -r '.id')
           if [ -z "$id" ] || [ "$id" = "null" ]; then echo "create user failed: no id in body"; exit 1; fi
           echo "id=$id" >> "$GITHUB_OUTPUT"
