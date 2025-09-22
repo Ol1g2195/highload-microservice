@@ -17,12 +17,18 @@ jobs:
         with:
           go-version: '1.24'
 
+      - name: Download modules
+        run: |
+          go env
+          go mod download
+
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.54.2
           args: |
             --timeout=5m
+            --modules-download-mode=mod
             --out-format=github-actions
       - name: Verify config
         run: |
