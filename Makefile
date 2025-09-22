@@ -1,3 +1,57 @@
+APP_NAME=highload-microservice
+GO_FILES=$(shell go list ./...)
+
+.PHONY: all build run test cover lint e2e-compose e2e-k8s docker build-docker push-docker fmt vet tidy deps clean
+
+all: build
+
+deps:
+	go mod download
+
+tidy:
+	go mod tidy
+
+fmt:
+	go fmt ./...
+
+vet:
+	go vet ./...
+
+build:
+	CGO_ENABLED=0 go build -o bin/$(APP_NAME) .
+
+run:
+	SERVER_PORT=8080 go run main.go
+
+test:
+	go test ./...
+
+cover:
+	go test -race -covermode=atomic -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out | tail -n 1
+
+lint:
+	golangci-lint run --timeout=5m
+
+docker:
+	docker build -t $(APP_NAME):latest .
+
+build-docker:
+	docker build -t $(APP_NAME):latest .
+
+push-docker:
+	docker push $(APP_NAME):latest
+
+e2e-compose:
+	docker compose up -d
+	sleep 5
+	curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/health
+
+e2e-k8s:
+	@echo "Запустите GitHub Actions workflow 'e2e-k8s' или используйте Kind локально"
+
+clean:
+	rm -rf bin coverage.out
 # Makefile для высоконагруженного микросервиса
 
 .PHONY: help build run test clean docker-build docker-run docker-stop k8s-deploy k8s-clean
