@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
+	"strings"
 
 	"highload-microservice/internal/config"
 
@@ -44,7 +46,11 @@ func RunMigrations(db *sql.DB) error {
 	var err error
 	
 	for _, path := range possiblePaths {
-		migrations, err = ioutil.ReadFile(path)
+		// Validate path to prevent directory traversal
+		if !isValidPath(path) {
+			continue
+		}
+		migrations, err = ioutil.ReadFile(path) // #nosec G304 -- Path is validated by isValidPath function
 		if err == nil {
 			break
 		}
@@ -60,5 +66,32 @@ func RunMigrations(db *sql.DB) error {
 	}
 
 	return nil
+}
+
+// isValidPath validates that the path is safe and doesn't contain directory traversal
+func isValidPath(path string) bool {
+	// Clean the path to resolve any .. or . components
+	cleanPath := filepath.Clean(path)
+	
+	// Check if the path contains any directory traversal attempts
+	if strings.Contains(cleanPath, "..") {
+		return false
+	}
+	
+	// Additional validation: ensure the path is within expected directories
+	allowedPrefixes := []string{
+		"internal/database/",
+		"./internal/database/",
+		"/app/internal/database/",
+		"migrations.sql",
+	}
+	
+	for _, prefix := range allowedPrefixes {
+		if strings.HasPrefix(cleanPath, prefix) {
+			return true
+		}
+	}
+	
+	return false
 }
 

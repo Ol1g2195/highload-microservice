@@ -171,7 +171,7 @@ func (s *UserService) DeleteUser(ctx context.Context, id uuid.UUID) error {
 
 	// Remove from cache
 	cacheKey := fmt.Sprintf("user:%s", id.String())
-	s.redisClient.Del(ctx, cacheKey)
+	_ = s.redisClient.Del(ctx, cacheKey) // Ignore cache deletion errors
 
 	// Send event to Kafka
 	event := models.KafkaEvent{

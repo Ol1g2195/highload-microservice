@@ -15,20 +15,32 @@ type CustomValidator struct {
 }
 
 // NewCustomValidator creates a new custom validator
-func NewCustomValidator() *CustomValidator {
+func NewCustomValidator() (*CustomValidator, error) {
 	v := validator.New()
 
 	// Register custom validations
-	v.RegisterValidation("strong_password", validateStrongPassword)
-	v.RegisterValidation("safe_string", validateSafeString)
-	v.RegisterValidation("uuid", validateUUID)
-	v.RegisterValidation("email_domain", validateEmailDomain)
-	v.RegisterValidation("no_sql_injection", validateNoSQLInjection)
-	v.RegisterValidation("no_xss", validateNoXSS)
+	if err := v.RegisterValidation("strong_password", validateStrongPassword); err != nil {
+		return nil, fmt.Errorf("failed to register strong_password validation: %w", err)
+	}
+	if err := v.RegisterValidation("safe_string", validateSafeString); err != nil {
+		return nil, fmt.Errorf("failed to register safe_string validation: %w", err)
+	}
+	if err := v.RegisterValidation("uuid", validateUUID); err != nil {
+		return nil, fmt.Errorf("failed to register uuid validation: %w", err)
+	}
+	if err := v.RegisterValidation("email_domain", validateEmailDomain); err != nil {
+		return nil, fmt.Errorf("failed to register email_domain validation: %w", err)
+	}
+	if err := v.RegisterValidation("no_sql_injection", validateNoSQLInjection); err != nil {
+		return nil, fmt.Errorf("failed to register no_sql_injection validation: %w", err)
+	}
+	if err := v.RegisterValidation("no_xss", validateNoXSS); err != nil {
+		return nil, fmt.Errorf("failed to register no_xss validation: %w", err)
+	}
 
 	return &CustomValidator{
 		validator: v,
-	}
+	}, nil
 }
 
 // Validate validates a struct

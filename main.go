@@ -273,8 +273,12 @@ func main() {
 
 	// Start server in a goroutine
 	server := &http.Server{
-		Addr:    cfg.Server.Host + ":" + cfg.Server.Port,
-		Handler: router,
+		Addr:              cfg.Server.Host + ":" + cfg.Server.Port,
+		Handler:           router,
+		ReadHeaderTimeout: 5 * time.Second, // Prevent Slowloris attacks
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	go func() {

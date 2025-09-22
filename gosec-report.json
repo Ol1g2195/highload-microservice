@@ -1,0 +1,156 @@
+{
+	"Golang errors": {},
+	"Issues": [
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\database\\connection.go",
+			"code": "46: \tfor _, path := range possiblePaths {\n47: \t\tmigrations, err = ioutil.ReadFile(path)\n48: \t\tif err == nil {\n",
+			"line": "47",
+			"column": "21",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "MEDIUM",
+			"confidence": "LOW",
+			"cwe": {
+				"id": "400",
+				"url": "https://cwe.mitre.org/data/definitions/400.html"
+			},
+			"rule_id": "G112",
+			"details": "Potential Slowloris Attack because ReadHeaderTimeout is not configured in the http.Server",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\main.go",
+			"code": "274: \t// Start server in a goroutine\n275: \tserver := \u0026http.Server{\n276: \t\tAddr:    cfg.Server.Host + \":\" + cfg.Server.Port,\n277: \t\tHandler: router,\n278: \t}\n279: \n",
+			"line": "275-278",
+			"column": "13",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\validation\\validator.go",
+			"code": "26: \tv.RegisterValidation(\"no_sql_injection\", validateNoSQLInjection)\n27: \tv.RegisterValidation(\"no_xss\", validateNoXSS)\n28: \n",
+			"line": "27",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\validation\\validator.go",
+			"code": "25: \tv.RegisterValidation(\"email_domain\", validateEmailDomain)\n26: \tv.RegisterValidation(\"no_sql_injection\", validateNoSQLInjection)\n27: \tv.RegisterValidation(\"no_xss\", validateNoXSS)\n",
+			"line": "26",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\validation\\validator.go",
+			"code": "24: \tv.RegisterValidation(\"uuid\", validateUUID)\n25: \tv.RegisterValidation(\"email_domain\", validateEmailDomain)\n26: \tv.RegisterValidation(\"no_sql_injection\", validateNoSQLInjection)\n",
+			"line": "25",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\validation\\validator.go",
+			"code": "23: \tv.RegisterValidation(\"safe_string\", validateSafeString)\n24: \tv.RegisterValidation(\"uuid\", validateUUID)\n25: \tv.RegisterValidation(\"email_domain\", validateEmailDomain)\n",
+			"line": "24",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\validation\\validator.go",
+			"code": "22: \tv.RegisterValidation(\"strong_password\", validateStrongPassword)\n23: \tv.RegisterValidation(\"safe_string\", validateSafeString)\n24: \tv.RegisterValidation(\"uuid\", validateUUID)\n",
+			"line": "23",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\validation\\validator.go",
+			"code": "21: \t// Register custom validations\n22: \tv.RegisterValidation(\"strong_password\", validateStrongPassword)\n23: \tv.RegisterValidation(\"safe_string\", validateSafeString)\n",
+			"line": "22",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		},
+		{
+			"severity": "LOW",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "703",
+				"url": "https://cwe.mitre.org/data/definitions/703.html"
+			},
+			"rule_id": "G104",
+			"details": "Errors unhandled",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\services\\user_service.go",
+			"code": "173: \tcacheKey := fmt.Sprintf(\"user:%s\", id.String())\n174: \ts.redisClient.Del(ctx, cacheKey)\n175: \n",
+			"line": "174",
+			"column": "2",
+			"nosec": false,
+			"suppressions": null
+		}
+	],
+	"Stats": {
+		"files": 28,
+		"lines": 5064,
+		"nosec": 0,
+		"found": 9
+	},
+	"GosecVersion": "dev"
+}

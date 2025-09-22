@@ -19,7 +19,13 @@ type ValidationMiddleware struct {
 // NewValidationMiddleware creates a new validation middleware
 func NewValidationMiddleware(logger *logrus.Logger) *ValidationMiddleware {
 	return &ValidationMiddleware{
-		validator: validation.NewCustomValidator(),
+		validator: func() *validation.CustomValidator {
+			v, err := validation.NewCustomValidator()
+			if err != nil {
+				logger.Fatalf("Failed to create custom validator: %v", err)
+			}
+			return v
+		}(),
 		logger:    logger,
 	}
 }

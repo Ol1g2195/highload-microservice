@@ -1,0 +1,28 @@
+{
+	"Golang errors": {},
+	"Issues": [
+		{
+			"severity": "MEDIUM",
+			"confidence": "HIGH",
+			"cwe": {
+				"id": "22",
+				"url": "https://cwe.mitre.org/data/definitions/22.html"
+			},
+			"rule_id": "G304",
+			"details": "Potential file inclusion via variable",
+			"file": "D:\\Golang\\Highly loaded microservice using modern technologies\\internal\\database\\connection.go",
+			"code": "52: \t\t}\n53: \t\tmigrations, err = ioutil.ReadFile(path)\n54: \t\tif err == nil {\n",
+			"line": "53",
+			"column": "21",
+			"nosec": false,
+			"suppressions": null
+		}
+	],
+	"Stats": {
+		"files": 28,
+		"lines": 5119,
+		"nosec": 0,
+		"found": 1
+	},
+	"GosecVersion": "dev"
+}
