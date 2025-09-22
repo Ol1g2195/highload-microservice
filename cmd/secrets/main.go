@@ -79,10 +79,8 @@ func encryptValue(secretManager *config.SecretManager, value string) {
 }
 
 func decryptValue(secretManager *config.SecretManager, value string) {
-	// Remove "enc:" prefix if present
-	if strings.HasPrefix(value, "enc:") {
-		value = strings.TrimPrefix(value, "enc:")
-	}
+	// Always trim prefix (idempotent)
+	value = strings.TrimPrefix(value, "enc:")
 
 	decrypted, err := secretManager.Decrypt(value)
 	if err != nil {

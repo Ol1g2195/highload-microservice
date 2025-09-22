@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -41,21 +41,21 @@ func RunMigrations(db *sql.DB) error {
 		"/app/internal/database/migrations.sql",
 		"migrations.sql",
 	}
-	
+
 	var migrations []byte
 	var err error
-	
+
 	for _, path := range possiblePaths {
 		// Validate path to prevent directory traversal
 		if !isValidPath(path) {
 			continue
 		}
-		migrations, err = ioutil.ReadFile(path) // #nosec G304 -- Path is validated by isValidPath function
+		migrations, err = os.ReadFile(path) // #nosec G304 -- Path is validated by isValidPath function
 		if err == nil {
 			break
 		}
 	}
-	
+
 	if err != nil {
 		return fmt.Errorf("failed to read migrations file from any path: %w", err)
 	}
@@ -72,12 +72,12 @@ func RunMigrations(db *sql.DB) error {
 func isValidPath(path string) bool {
 	// Clean the path to resolve any .. or . components
 	cleanPath := filepath.Clean(path)
-	
+
 	// Check if the path contains any directory traversal attempts
 	if strings.Contains(cleanPath, "..") {
 		return false
 	}
-	
+
 	// Additional validation: ensure the path is within expected directories
 	allowedPrefixes := []string{
 		"internal/database/",
@@ -85,13 +85,12 @@ func isValidPath(path string) bool {
 		"/app/internal/database/",
 		"migrations.sql",
 	}
-	
+
 	for _, prefix := range allowedPrefixes {
 		if strings.HasPrefix(cleanPath, prefix) {
 			return true
 		}
 	}
-	
+
 	return false
 }
-
