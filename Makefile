@@ -50,6 +50,12 @@ e2e-compose:
 e2e-k8s:
 	@echo "Запустите GitHub Actions workflow 'e2e-k8s' или используйте Kind локально"
 
+k6-smoke:
+	docker run --rm -i \
+	  -e VUS=10 -e DURATION=30s -e BASE_URL=http://host.docker.internal:8080 \
+	  -e ADMIN_EMAIL=admin@highload-microservice.local -e ADMIN_PASSWORD=admin123456 \
+	  -v ${PWD}/load/k6:/scripts grafana/k6:0.51.0 run /scripts/smoke.js
+
 clean:
 	rm -rf bin coverage.out
 # Makefile для высоконагруженного микросервиса
