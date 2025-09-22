@@ -7,7 +7,7 @@
 - **Высокая производительность**: Использование горутин и каналов для параллельной обработки
 - **Микросервисная архитектура**: Разделение на независимые сервисы
 - **Современный стек технологий**:
-  - **Go 1.21** - основной язык программирования
+  - **Go 1.24** - основной язык программирования
   - **PostgreSQL** - основная база данных
   - **Redis** - кэширование и быстрый доступ к данным
   - **Kafka** - брокер сообщений для асинхронной обработки
@@ -32,7 +32,7 @@
 ## 📦 Релизы и пакеты
 
 ### Последний релиз
-- **Версия**: v1.0.0
+- **Версия**: v1.0.2
 - **Docker образ**: `ghcr.io/oleg2195/highload-microservice:latest`
 - **Скачать**: [Releases](https://github.com/Ol1g2195/highload-microservice/releases)
 
@@ -99,13 +99,13 @@ LOG_LEVEL=info
 
 ```bash
 # Запуск всех сервисов
-docker-compose up -d
+docker compose up -d
 
 # Просмотр логов
-docker-compose logs -f
+docker compose logs -f
 
 # Остановка
-docker-compose down
+docker compose down
 ```
 
 Это запустит:
@@ -120,7 +120,7 @@ docker-compose down
 
 ```bash
 # Запуск только зависимостей
-docker-compose up -d postgres redis kafka
+docker compose up -d postgres redis kafka
 
 # Установка зависимостей Go
 go mod download
@@ -214,7 +214,7 @@ kubectl get service highload-service -n highload-microservice
 kubectl port-forward service/highload-service 8080:80 -n highload-microservice
 ```
 
-### 4. Настройки Kafka, которые мы добавили
+### 4. Настройки Kafka
 
 В `k8s/kafka-deployment.yaml` настроены корректные слушатели и пробы:
 ```yaml
@@ -458,7 +458,7 @@ bash scripts/smoke.sh
 
 ### GitHub Actions
 
-- Compose smoke: `.github/workflows/e2e-compose.yml` (сборка образа, docker-compose up, smoke)
+- Compose smoke: `.github/workflows/e2e-compose.yml` (сборка образа, docker compose up, smoke)
 - K8s smoke (Kind): `.github/workflows/e2e-k8s.yml` (Kind cluster, загрузка образа, манифесты, smoke)
 
 Запуск:
