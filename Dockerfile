@@ -20,38 +20,26 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
 # Final stage
-FROM alpine:latest
-
-# Install ca-certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates
-
-# Create non-root user
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+FROM scratch
 
 # Set working directory
 WORKDIR /app
 
-# Copy binary from builder stage
-COPY --from=builder /app/main .
+# Copy SSL cert bundle from builder
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-# Copy database migrations
-COPY --from=builder /app/internal/database/migrations.sql ./migrations.sql
+# Copy binary and migrations
+COPY --from=builder /app/main /app/main
+COPY --from=builder /app/internal/database/migrations.sql /app/migrations.sql
 
-
-# Change ownership to non-root user
-RUN chown -R appuser:appgroup /app
-
-# Switch to non-root user
-USER appuser
+# Run as non-root (numeric id)
+USER 1001:1001
 
 # Expose port
 EXPOSE 8080
 
-# Health check (HTTP for e2e-compose)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+# Note: healthcheck is defined in compose; scratch has no shell/wget
 
 # Run the application
-CMD ["./main"]
+ENTRYPOINT ["/app/main"]
 
