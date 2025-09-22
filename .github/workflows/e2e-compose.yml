@@ -71,12 +71,15 @@ jobs:
           TOKEN='${{ steps.login.outputs.token }}'
           uniq=$(date +%s)
           email="user_${uniq}@example.com"
-          resp=$(curl -s -X POST http://localhost:8080/api/v1/users/ \
+          body=$(mktemp)
+          code=$(curl -s -o "$body" -w '%{http_code}' -X POST http://localhost:8080/api/v1/users/ \
             -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
             -d "{\"email\":\"$email\",\"first_name\":\"John\",\"last_name\":\"Doe\"}")
-          echo "$resp"
-          id=$(echo "$resp" | jq -r '.id')
-          if [ -z "$id" ] || [ "$id" = "null" ]; then echo "create user failed"; exit 1; fi
+          echo "Response code: $code"
+          cat "$body"
+          if [ "$code" != "201" ]; then echo "create user failed"; exit 1; fi
+          id=$(cat "$body" | jq -r '.id')
+          if [ -z "$id" ] || [ "$id" = "null" ]; then echo "create user failed: no id in body"; exit 1; fi
           echo "id=$id" >> "$GITHUB_OUTPUT"
 
       - name: Smoke - create event (authorized)
