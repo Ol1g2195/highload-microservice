@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "highload-microservice.fullname" . }}
+data:
+  USE_TLS: {{ .Values.env.USE_TLS | quote }}
+  DDOS_PROTECTION_ENABLED: {{ .Values.env.DDOS_PROTECTION_ENABLED | quote }}
+  RATE_LIMIT_REQUESTS_PER_MINUTE: {{ .Values.env.RATE_LIMIT_REQUESTS_PER_MINUTE | quote }}
+  RATE_LIMIT_BURST_SIZE: {{ .Values.env.RATE_LIMIT_BURST_SIZE | quote }}
+  RATE_LIMIT_AUTH_REQUESTS_PER_MINUTE: {{ .Values.env.RATE_LIMIT_AUTH_REQUESTS_PER_MINUTE | quote }}
+  RATE_LIMIT_AUTH_BURST_SIZE: {{ .Values.env.RATE_LIMIT_AUTH_BURST_SIZE | quote }}
+
