@@ -20,7 +20,9 @@ import (
 	"highload-microservice/internal/services"
 	"highload-microservice/internal/worker"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
@@ -137,6 +139,12 @@ func main() {
 	// Setup HTTP server
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
+
+	// Observability endpoints
+	// Prometheus metrics
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
+	// pprof on /debug/pprof
+	pprof.Register(router)
 
 	// Apply security middleware globally
 	router.Use(securityMiddleware.RequestID())
