@@ -9,6 +9,10 @@ on:
     # Run security audit daily at 2 AM UTC
     - cron: '0 2 * * *'
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   security-audit:
     name: Security Audit
@@ -179,7 +183,7 @@ jobs:
         docker-compose down
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports
@@ -189,7 +193,7 @@ jobs:
           gitleaks-report.json
 
     - name: Upload SARIF file
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: gosec-report.sarif
@@ -216,7 +220,7 @@ jobs:
         output: 'trivy-results.sarif'
 
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
 
@@ -239,7 +243,7 @@ jobs:
         output: 'trivy-image-results.sarif'
 
     - name: Upload Trivy image scan results
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-image-results.sarif'
 

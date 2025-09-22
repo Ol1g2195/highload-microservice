@@ -15,6 +15,10 @@ on:
     # Run production security check weekly on Sundays at 3 AM UTC
     - cron: '0 3 * * 0'
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   production-security-audit:
     name: Production Security Audit
@@ -186,7 +190,7 @@ jobs:
         docker-compose down
 
     - name: Upload security artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: production-security-reports
@@ -199,7 +203,7 @@ jobs:
           security-report.md
 
     - name: Upload SARIF files
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: gosec-report.sarif
