@@ -1,3 +1,136 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  e2e-compose:
+    name: E2E (Docker Compose)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Build app image
+        run: |
+          docker build -t highload-microservice-app .
+
+      - name: Start stack (HTTP mode)
+        env:
+          USE_TLS: "false"
+        run: |
+          # ensure HTTP mode during CI
+          export USE_TLS=false
+          docker compose up -d
+
+      - name: Wait for health
+        run: |
+          echo "Checking if app container is running..."
+          docker compose ps app
+          echo "Checking app logs..."
+          docker compose logs app --tail=20 || true
+          echo "Testing connectivity..."
+          for i in {1..60}; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/health || true)
+            if [ "$code" = "200" ]; then 
+              echo "App is healthy"; exit 0; 
+            fi
+            echo "Waiting for app health... attempt $i/60 (code: $code)"
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "Checking app logs after $i attempts..."; docker compose logs app --tail=10 || true
+            fi
+            sleep 5
+          done
+          echo "App failed to become healthy after 5 minutes" >&2
+          docker compose logs app --tail=100 || true
+          exit 1
+
+      - name: Login as admin and call protected endpoints
+        run: |
+          set -e
+          # Login admin (created by migrations)
+          LOGIN_PAYLOAD='{"email":"admin@highload-microservice.local","password":"admin123456"}'
+          resp=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+            -H 'Content-Type: application/json' -d "$LOGIN_PAYLOAD")
+          echo "$resp" | jq . >/dev/null 2>&1 || { echo "Login response is not JSON"; echo "$resp"; exit 1; }
+          TOKEN=$(echo "$resp" | jq -r .access_token)
+          test "$TOKEN" != "null" -a -n "$TOKEN" || { echo "No access token"; echo "$resp"; exit 1; }
+
+          # Create user (admin-only)
+          CREATE_USER='{"email":"user1@example.com","first_name":"Test","last_name":"User"}'
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8080/api/v1/users/ \
+            -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d "$CREATE_USER")
+          test "$code" = "201" || { echo "create user failed, code=$code"; exit 1; }
+
+          # List users
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/users/)
+          test "$code" = "200" || { echo "list users failed, code=$code"; exit 1; }
+
+      - name: Teardown
+        if: always()
+        run: docker compose down -v
+
+  security-basic:
+    name: Security (basic)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Install tools
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          wget -q https://github.com/gitleaks/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz
+          tar -xzf gitleaks_8.18.0_linux_x64.tar.gz
+          chmod +x gitleaks
+
+      - name: Gosec
+        run: |
+          gosec -fmt json -out gosec-report.json ./...
+          jq '.Stats' gosec-report.json || true
+          HIGH=$(jq '.Stats.G1 + .Stats.G2 + .Stats.G3' gosec-report.json)
+          if [ "$HIGH" -gt 0 ]; then
+            echo "High severity issues: $HIGH"; exit 1; fi
+
+      - name: Govulncheck
+        run: govulncheck ./... || true
+
+      - name: Staticcheck
+        run: staticcheck ./...
+
+      - name: Gitleaks (no git history, exclude certs)
+        run: |
+          ./gitleaks detect --source . --no-git --verbose --redact \
+            --exclude-filename "certs/server.key" \
+            --report-format json --report-path gitleaks-report.json || true
+          COUNT=$(jq '. | length' gitleaks-report.json 2>/dev/null || echo 0)
+          if [ "$COUNT" -gt 0 ]; then
+            echo "Potential secrets: $COUNT"; cat gitleaks-report.json | jq '.[] | {rule, file, line}'
+            exit 1; fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            gosec-report.json
+            gitleaks-report.json
 name: ci
 
 on:
