@@ -45,7 +45,9 @@ jobs:
           kubectl rollout status deployment/highload-microservice -n highload-microservice
 
       - name: Port-forward app (background)
-        run: kubectl port-forward service/highload-service 8080:80 -n highload-microservice >pf.log 2>&1 &
+        run: |
+          kubectl port-forward service/highload-service 8080:80 -n highload-microservice >pf.log 2>&1 &
+          sleep 2
 
       - name: Wait for health
         shell: bash
@@ -57,6 +59,9 @@ jobs:
               exit 0
             fi
             echo "Waiting for app health... attempt $i/60 (code: $code)"
+            if [ $((i % 10)) -eq 0 ]; then
+              echo "=== Port-forward logs ==="; cat pf.log || true
+            fi
             sleep 2
           done
           echo "App is not healthy after 60 attempts" >&2; exit 1

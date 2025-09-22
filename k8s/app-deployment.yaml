@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
       - name: highload-microservice
-        image: docker.io/oleg2195/highload-microservice:latest
-        imagePullPolicy: IfNotPresent
+        image: highload-microservice:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         envFrom:
