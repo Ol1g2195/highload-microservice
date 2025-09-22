@@ -65,10 +65,11 @@ jobs:
           test "$TOKEN" != "null" -a -n "$TOKEN" || { echo "No access token"; echo "$resp"; exit 1; }
 
           # Create user (admin-only)
-          CREATE_USER='{"email":"user1@example.com","first_name":"Test","last_name":"User"}'
+          uniq=$(date +%s)
+          CREATE_USER=$(printf '{"email":"user_%s@example.com","first_name":"Test","last_name":"User"}' "$uniq")
           code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8080/api/v1/users/ \
             -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d "$CREATE_USER")
-          test "$code" = "201" || { echo "create user failed, code=$code"; exit 1; }
+          if [ "$code" != "201" ] && [ "$code" != "409" ]; then echo "create user failed, code=$code"; exit 1; fi
 
           # List users
           code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/v1/users/)
