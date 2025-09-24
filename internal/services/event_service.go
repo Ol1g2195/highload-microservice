@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"highload-microservice/internal/kafka"
 	"highload-microservice/internal/models"
-	"highload-microservice/internal/redis"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -17,12 +15,18 @@ import (
 
 type EventService struct {
 	db            *sql.DB
-	redisClient   *redis.Client
-	kafkaProducer *kafka.Producer
+	redisClient   RedisClient
+	kafkaProducer KafkaProducer
 	logger        *logrus.Logger
 }
 
-func NewEventService(db *sql.DB, redisClient *redis.Client, kafkaProducer *kafka.Producer, logger *logrus.Logger) *EventService {
+// RedisClient abstracts the subset of Redis methods used by the service
+// RedisClient interface defined in deps.go
+
+// KafkaProducer abstracts the subset of Kafka producer methods used by the service
+// KafkaProducer interface defined in deps.go
+
+func NewEventService(db *sql.DB, redisClient RedisClient, kafkaProducer KafkaProducer, logger *logrus.Logger) *EventService {
 	return &EventService{
 		db:            db,
 		redisClient:   redisClient,
@@ -142,7 +146,9 @@ func (s *EventService) ListEvents(ctx context.Context, page, limit int) (*models
 	}, nil
 }
 
-func (s *EventService) ProcessEvents(consumer *kafka.Consumer) {
+func (s *EventService) ProcessEvents(consumer interface {
+	ReadMessage(ctx context.Context) (models.KafkaEvent, error)
+}) {
 	s.logger.Info("Starting event processing...")
 
 	for {

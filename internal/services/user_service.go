@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"highload-microservice/internal/kafka"
 	"highload-microservice/internal/models"
-	"highload-microservice/internal/redis"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -17,12 +15,15 @@ import (
 
 type UserService struct {
 	db            *sql.DB
-	redisClient   *redis.Client
-	kafkaProducer *kafka.Producer
+	redisClient   RedisClient
+	kafkaProducer KafkaProducer
 	logger        *logrus.Logger
 }
 
-func NewUserService(db *sql.DB, redisClient *redis.Client, kafkaProducer *kafka.Producer, logger *logrus.Logger) *UserService {
+// RedisClient abstracts the subset of Redis methods used by the service
+// interfaces are defined in deps.go
+
+func NewUserService(db *sql.DB, redisClient RedisClient, kafkaProducer KafkaProducer, logger *logrus.Logger) *UserService {
 	return &UserService{
 		db:            db,
 		redisClient:   redisClient,

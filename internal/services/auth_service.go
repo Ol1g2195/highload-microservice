@@ -244,7 +244,7 @@ func (s *AuthService) CreateAPIKey(ctx context.Context, req models.CreateAPIKeyR
 func (s *AuthService) ValidateAPIKey(ctx context.Context, apiKey string) ([]string, error) {
 	keyHash := s.hashAPIKey(apiKey)
 
-	var permissions []string
+	var permissions pq.StringArray
 	var isActive bool
 	var expiresAt *time.Time
 
@@ -267,7 +267,7 @@ func (s *AuthService) ValidateAPIKey(ctx context.Context, apiKey string) ([]stri
 		return nil, fmt.Errorf("API key expired")
 	}
 
-	return permissions, nil
+	return []string(permissions), nil
 }
 
 // Helper methods

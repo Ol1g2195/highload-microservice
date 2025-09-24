@@ -8,3 +8,5 @@ gosec-report*.json
 **/bin/
 **/dist/
 
+
+docs/LOCAL_TESTING_GUIDE.md
